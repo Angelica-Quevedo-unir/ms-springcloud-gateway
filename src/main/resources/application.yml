@@ -1,0 +1,76 @@
+spring:
+  application:
+    name: ms-springcloud-gateway
+
+  cloud:
+    gateway:
+      discovery:
+        locator:
+          enabled: true
+      routes:
+        - id: books-catalogue-route
+          uri: lb://ms-books-catalogue
+          predicates:
+            - Path=/book-catalogue/v3/api-docs/**, /book-catalogue/swagger-ui/**, /book-catalogue/swagger-ui.html, /book-catalogue/admin/health, /book-catalogue/api/v1/books/**
+          filters:
+            - name: CircuitBreaker
+              args:
+                name: paymentsCircuitBreaker
+                fallbackUri: forward:/fallback/books
+
+        - id: payments-service-route
+          uri: lb://ms-books-payments
+          predicates:
+            - Path=/book-payments/**
+          filters:
+            - name: CircuitBreaker
+              args:
+                name: paymentsCircuitBreaker
+                fallbackUri: forward:/fallback/payments
+
+        # Rutas no configuradas -> Fallback genérico
+        - id: default-fallback-route
+          uri: forward:/fallback/not-found
+          predicates:
+            - Path=/**
+          filters:
+            - name: CircuitBreaker
+              args:
+                name: defaultFallbackCircuit
+                fallbackUri: forward:/fallback/not-found
+
+      # Configuración global de CORS
+      globalcors:
+        cors-configurations:
+          '[/**]':
+            allowedOriginPatterns:
+              - "http://*"
+              - "https://*"
+            allowedMethods:
+              - GET
+              - POST
+              - PUT
+              - DELETE
+              - OPTIONS
+            allowedHeaders:
+              - "Authorization"
+              - "Content-Type"
+              - "X-Requested-With"
+            exposedHeaders:
+              - "Authorization"
+            allowCredentials: true
+
+    loadbalancer:
+      retry:
+        enabled: true
+
+eureka:
+  client:
+    service-url:
+      defaultZone: http://localhost:8761/eureka/
+  instance:
+    prefer-ip-address: true
+
+logging:
+  level:
+    org.springframework.cloud.gateway: DEBUG
