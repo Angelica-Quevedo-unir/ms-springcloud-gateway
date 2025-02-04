@@ -1,6 +1,6 @@
 spring:
   application:
-    name: ms-springcloud-gateway
+      name: ms-springcloud-gateway
 
   cloud:
     gateway:
@@ -52,6 +52,7 @@ spring:
               - PUT
               - DELETE
               - OPTIONS
+              - PATCH
             allowedHeaders:
               - "Authorization"
               - "Content-Type"
